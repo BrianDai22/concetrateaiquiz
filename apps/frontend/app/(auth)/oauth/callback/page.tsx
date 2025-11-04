@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refetchUser } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState<string>('Processing login...');
 
@@ -30,7 +32,11 @@ export default function OAuthCallbackPage() {
           setMessage('Login successful! Redirecting...');
 
           // Cookies are already set by backend
-          // Fetch user data directly to get role
+          // Refetch user data to update AuthContext before redirecting
+          // This ensures user info (name, email, ID) is available immediately on the dashboard
+          await refetchUser();
+
+          // Fetch user data directly to get role for redirect
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v0/auth/me`, {
             credentials: 'include',
           });
@@ -43,8 +49,6 @@ export default function OAuthCallbackPage() {
 
           // Redirect based on role from fresh data
           // Small delay to show success message
-          // Note: We don't call refetchUser() here because we're navigating away
-          // The destination page will load fresh user data via AuthContext
           setTimeout(() => {
             if (userData.user && userData.user.role) {
               router.push(`/${userData.user.role}/dashboard`);
@@ -71,7 +75,7 @@ export default function OAuthCallbackPage() {
 
     handleCallback();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]); // Only run when URL params change, not when user updates
+  }, [searchParams]); // Only run when URL params change, not when refetchUser updates
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-100">
