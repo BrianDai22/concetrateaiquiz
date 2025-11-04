@@ -90,11 +90,14 @@ export default function TeacherAssignmentsPage() {
       setIsSubmitting(true);
       setError(null);
 
+      // Convert date to ISO 8601 format (YYYY-MM-DD -> YYYY-MM-DDTHH:mm:ss.sssZ)
+      const dueDateTime = new Date(formData.dueDate + 'T23:59:59.999Z').toISOString();
+
       const newAssignment = await teacherApi.createAssignment({
         classId: formData.classId,
         title: formData.title.trim(),
         description: formData.description.trim(),
-        dueDate: formData.dueDate,
+        dueDate: dueDateTime,
       });
 
       setAssignments([...assignments, newAssignment]);
@@ -120,10 +123,13 @@ export default function TeacherAssignmentsPage() {
       setIsSubmitting(true);
       setError(null);
 
+      // Convert date to ISO 8601 format (YYYY-MM-DD -> YYYY-MM-DDTHH:mm:ss.sssZ)
+      const dueDateTime = new Date(formData.dueDate + 'T23:59:59.999Z').toISOString();
+
       const updatedAssignment = await teacherApi.updateAssignment(selectedAssignment.id, {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        dueDate: formData.dueDate,
+        dueDate: dueDateTime,
       });
 
       setAssignments(
