@@ -56,6 +56,11 @@ class ApiClient {
       throw new Error(error.message || 'API request failed');
     }
 
+    // Handle 204 No Content responses (DELETE operations)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return {} as T;
+    }
+
     return response.json();
   }
 
