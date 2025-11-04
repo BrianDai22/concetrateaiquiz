@@ -87,7 +87,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Complete exercises 1-10',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
@@ -105,7 +104,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Complete exercises',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
@@ -262,7 +260,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Complete exercises',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
@@ -309,7 +306,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Complete exercises',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
@@ -346,7 +342,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Complete exercises',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
@@ -379,7 +374,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Complete exercises',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
@@ -783,7 +777,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Exercises',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
@@ -803,7 +796,6 @@ describe('AssignmentService - Integration Tests', () => {
         teacher.id,
         {
           title: 'Homework 1',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           description: 'Exercises',
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         }
