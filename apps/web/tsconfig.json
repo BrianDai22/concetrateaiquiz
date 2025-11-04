@@ -1,0 +1,43 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "dom", "dom.iterable", "esnext"],
+    "module": "esnext",
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "moduleResolution": "bundler",
+    "allowJs": false,
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "tsBuildInfoFile": "./.next/.tsbuildinfo"
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ],
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/validation" },
+    { "path": "../../packages/ui" }
+  ]
+}

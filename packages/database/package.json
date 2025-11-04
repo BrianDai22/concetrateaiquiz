@@ -1,0 +1,25 @@
+{
+  "name": "@concentrate/database",
+  "version": "1.0.0",
+  "description": "Database layer with Kysely ORM for Canvas School Portal",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "migrate": "npm run build && node dist/migrations/migrate.js",
+    "seed": "npm run build && node dist/seed.js"
+  },
+  "dependencies": {
+    "kysely": "^0.27.4",
+    "pg": "^8.13.1",
+    "ioredis": "^5.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

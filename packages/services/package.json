@@ -1,0 +1,23 @@
+{
+  "name": "@concentrate/services",
+  "version": "1.0.0",
+  "description": "Business logic services for school portal platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@concentrate/database": "*",
+    "@concentrate/shared": "*",
+    "@concentrate/validation": "*"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "typescript": "*",
+    "vitest": "*"
+  }
+}

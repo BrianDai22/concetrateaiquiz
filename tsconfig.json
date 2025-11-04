@@ -1,0 +1,63 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "incremental": true,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@concentrate/database": ["./packages/database/src"],
+      "@concentrate/database/*": ["./packages/database/src/*"],
+      "@concentrate/validation": ["./packages/validation/src"],
+      "@concentrate/validation/*": ["./packages/validation/src/*"],
+      "@concentrate/shared": ["./packages/shared/src"],
+      "@concentrate/shared/*": ["./packages/shared/src/*"],
+      "@concentrate/ui": ["./packages/ui/src"],
+      "@concentrate/ui/*": ["./packages/ui/src/*"]
+    }
+  },
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/database" },
+    { "path": "./packages/validation" },
+    { "path": "./packages/ui" }
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "dist",
+    "**/dist",
+    ".next",
+    "**/.next",
+    "coverage",
+    "**/coverage"
+  ]
+}
