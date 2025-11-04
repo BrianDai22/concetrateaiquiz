@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useRequireAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/LogoutButton';
@@ -32,41 +33,50 @@ export default function StudentDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
-              My Classes
-            </h2>
-            <p className="text-sm text-neutral-600 font-mono">
-              View your enrolled classes and lessons
-            </p>
-            <p className="text-sm text-neutral-400 font-mono mt-4">
-              Coming in Phase 5
-            </p>
-          </Card>
+          <Link href="/student/classes" className="block hover:opacity-80 transition-opacity">
+            <Card>
+              <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
+                My Classes
+              </h2>
+              <p className="text-sm text-neutral-600 font-mono mb-4">
+                View your enrolled classes and lessons
+              </p>
+              <p className="text-sm text-primary font-mono uppercase">
+                View Classes →
+              </p>
+            </Card>
+          </Link>
 
-          <Card>
-            <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
-              Assignments
-            </h2>
-            <p className="text-sm text-neutral-600 font-mono">
-              View and submit your assignments
-            </p>
-            <p className="text-sm text-neutral-400 font-mono mt-4">
-              Coming in Phase 5
-            </p>
-          </Card>
+          <Link
+            href="/student/assignments"
+            className="block hover:opacity-80 transition-opacity"
+          >
+            <Card>
+              <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
+                Assignments
+              </h2>
+              <p className="text-sm text-neutral-600 font-mono mb-4">
+                View and submit your assignments
+              </p>
+              <p className="text-sm text-primary font-mono uppercase">
+                View Assignments →
+              </p>
+            </Card>
+          </Link>
 
-          <Card>
-            <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
-              Grades
-            </h2>
-            <p className="text-sm text-neutral-600 font-mono">
-              Check your grades and feedback
-            </p>
-            <p className="text-sm text-neutral-400 font-mono mt-4">
-              Coming in Phase 5
-            </p>
-          </Card>
+          <Link href="/student/grades" className="block hover:opacity-80 transition-opacity">
+            <Card>
+              <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
+                Grades
+              </h2>
+              <p className="text-sm text-neutral-600 font-mono mb-4">
+                Check your grades and feedback
+              </p>
+              <p className="text-sm text-primary font-mono uppercase">
+                View Grades →
+              </p>
+            </Card>
+          </Link>
         </div>
 
         <Card className="mt-6">
