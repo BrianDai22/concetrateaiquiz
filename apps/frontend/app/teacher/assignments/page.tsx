@@ -67,7 +67,9 @@ export default function TeacherAssignmentsPage() {
     if (selectedClassId === 'all') {
       setFilteredAssignments(assignments);
     } else {
-      setFilteredAssignments(assignments.filter((a) => a.classId === selectedClassId));
+      setFilteredAssignments(
+        assignments.filter((a) => ((a as any).class_id || a.classId) === selectedClassId)
+      );
     }
   }, [selectedClassId, assignments]);
 
@@ -167,11 +169,12 @@ export default function TeacherAssignmentsPage() {
   // Open edit modal
   const openEditModal = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
+    const dueDate = (assignment as any).due_date || assignment.dueDate;
     setFormData({
-      classId: assignment.classId,
+      classId: (assignment as any).class_id || assignment.classId,
       title: assignment.title,
       description: assignment.description,
-      dueDate: assignment.dueDate.split('T')[0], // Convert to YYYY-MM-DD
+      dueDate: dueDate.split('T')[0], // Convert to YYYY-MM-DD
     });
     setShowEditModal(true);
   };
@@ -250,28 +253,31 @@ export default function TeacherAssignmentsPage() {
         )}
 
         <div className="space-y-4">
-          {filteredAssignments.map((assignment) => (
-            <Card key={assignment.id}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-xl font-mono text-neutral-700 uppercase">
-                      {assignment.title}
-                    </h2>
-                    {isOverdue(assignment.dueDate) && (
-                      <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-mono uppercase rounded-[2px]">
-                        Overdue
-                      </span>
-                    )}
+          {filteredAssignments.map((assignment) => {
+            const dueDate = (assignment as any).due_date || assignment.dueDate;
+            const classId = (assignment as any).class_id || assignment.classId;
+            return (
+              <Card key={assignment.id}>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-xl font-mono text-neutral-700 uppercase">
+                        {assignment.title}
+                      </h2>
+                      {isOverdue(dueDate) && (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-mono uppercase rounded-[2px]">
+                          Overdue
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-neutral-600 font-mono mb-3">
+                      {assignment.description}
+                    </p>
+                    <div className="flex gap-4 text-xs text-neutral-500 font-mono">
+                      <span>Class: {getClassName(classId)}</span>
+                      <span>Due: {new Date(dueDate).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                  <p className="text-sm text-neutral-600 font-mono mb-3">
-                    {assignment.description}
-                  </p>
-                  <div className="flex gap-4 text-xs text-neutral-500 font-mono">
-                    <span>Class: {getClassName(assignment.classId)}</span>
-                    <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
                 <div className="flex gap-2 ml-4">
                   <Link
                     href={`/teacher/assignments/${assignment.id}/grade`}
@@ -294,7 +300,8 @@ export default function TeacherAssignmentsPage() {
                 </div>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </div>
 
