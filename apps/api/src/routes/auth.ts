@@ -4,7 +4,7 @@
  */
 
 import { FastifyInstance } from 'fastify'
-import { AuthService, OAuthService, type GoogleProfile } from '@concentrate/services'
+import { AuthService, OAuthService, UserService, type GoogleProfile } from '@concentrate/services'
 import { SessionRepository } from '@concentrate/database'
 import { redis } from '@concentrate/database'
 import {
@@ -140,8 +140,17 @@ export async function authRoutes(app: FastifyInstance) {
    * Get current authenticated user
    */
   app.get('/me', { preHandler: [requireAuth] }, async (request, reply) => {
+    // Fetch full user data from database
+    const userService = new UserService(request.db)
+    const fullUser = await userService.getUserById(request.user!.userId)
+
     return reply.send({
-      user: request.user,
+      user: {
+        id: fullUser.id,
+        email: fullUser.email,
+        name: fullUser.name,
+        role: fullUser.role,
+      },
     })
   })
 
