@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useRequireAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/LogoutButton';
@@ -32,39 +33,43 @@ export default function TeacherDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
-              My Classes
-            </h2>
-            <p className="text-sm text-neutral-600 font-mono">
-              Create and manage your classes
-            </p>
-            <p className="text-sm text-neutral-400 font-mono mt-4">
-              Coming in Phase 4
-            </p>
-          </Card>
+          <Link href="/teacher/classes" className="block hover:opacity-80 transition-opacity">
+            <Card>
+              <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
+                My Classes
+              </h2>
+              <p className="text-sm text-neutral-600 font-mono mb-4">
+                Create and manage your classes
+              </p>
+              <p className="text-sm text-primary font-mono uppercase">
+                Manage Classes →
+              </p>
+            </Card>
+          </Link>
 
-          <Card>
-            <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
-              Assignments
-            </h2>
-            <p className="text-sm text-neutral-600 font-mono">
-              Create assignments and track submissions
-            </p>
-            <p className="text-sm text-neutral-400 font-mono mt-4">
-              Coming in Phase 4
-            </p>
-          </Card>
+          <Link href="/teacher/assignments" className="block hover:opacity-80 transition-opacity">
+            <Card>
+              <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
+                Assignments
+              </h2>
+              <p className="text-sm text-neutral-600 font-mono mb-4">
+                Create assignments and track submissions
+              </p>
+              <p className="text-sm text-primary font-mono uppercase">
+                View Assignments →
+              </p>
+            </Card>
+          </Link>
 
           <Card>
             <h2 className="text-xl font-mono text-neutral-700 uppercase mb-4">
               Grading
             </h2>
-            <p className="text-sm text-neutral-600 font-mono">
+            <p className="text-sm text-neutral-600 font-mono mb-4">
               Grade submissions and provide feedback
             </p>
-            <p className="text-sm text-neutral-400 font-mono mt-4">
-              Coming in Phase 4
+            <p className="text-sm text-neutral-500 font-mono">
+              Access via Assignments page
             </p>
           </Card>
         </div>
