@@ -29,6 +29,8 @@ test-results/
 # Development
 .env.local
 .env.*.local
+**/.env.local
+**/.env.*.local
 *.log
 
 # Git
