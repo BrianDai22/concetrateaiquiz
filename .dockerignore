@@ -1,0 +1,69 @@
+# Docker ignore file - Exclude files from Docker build context
+# Reduces image size and speeds up builds
+
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build outputs
+dist
+.next
+out
+build
+
+# Testing
+coverage
+.nyc_output
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/__tests__/
+**/__mocks__/
+tests/
+playwright-report/
+test-results/
+
+# Development
+.env.local
+.env.*.local
+*.log
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+README.md
+docs/
+*.md
+!deployment/*.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Misc
+.prettierrc
+.prettierignore
+.eslintrc.json
+.eslintignore
+tsconfig.json
+vitest.config.ts
+playwright.config.ts

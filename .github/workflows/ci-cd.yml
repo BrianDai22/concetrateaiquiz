@@ -1,0 +1,271 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: docker.io
+  IMAGE_PREFIX: ${{ secrets.DOCKERHUB_USERNAME || 'school-portal' }}
+
+jobs:
+  # ============================================
+  # Job 1: Run All Tests
+  # ============================================
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: concentrate_quiz_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run type-check
+
+      - name: Run unit & integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/concentrate_quiz_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret
+          NODE_ENV: test
+        run: npm run test -- --run
+
+      - name: Run E2E tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/concentrate_quiz_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret
+          NODE_ENV: test
+        run: |
+          npm run test:e2e
+
+      - name: Check test coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/concentrate_quiz_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret
+          NODE_ENV: test
+        run: |
+          npm run test:coverage
+          # Enforce 100% coverage as per SPECS.md
+          # Coverage thresholds are in vitest.config.ts
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+      - name: Comment test results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ All tests passed! Coverage report available in artifacts.'
+            })
+
+  # ============================================
+  # Job 2: Build Docker Images
+  # ============================================
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata for API
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/api
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.api
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/api:latest
+          cache-to: type=inline
+
+      - name: Extract metadata for Frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/frontend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/frontend:latest
+          cache-to: type=inline
+
+      - name: Extract metadata for Nginx
+        id: meta-nginx
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/nginx
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Nginx image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.nginx
+          push: true
+          tags: ${{ steps.meta-nginx.outputs.tags }}
+          labels: ${{ steps.meta-nginx.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/nginx:latest
+          cache-to: type=inline
+
+      - name: Image build summary
+        run: |
+          echo "## Docker Images Built and Pushed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ API: \`${{ steps.meta-api.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Frontend: \`${{ steps.meta-frontend.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Nginx: \`${{ steps.meta-nginx.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Job 3: Deploy (Optional - Manual Trigger)
+  # ============================================
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    environment:
+      name: production
+      url: https://${{ secrets.PRODUCTION_DOMAIN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH || '~/school-portal' }}
+            git pull origin main
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            docker-compose exec -T api npm run migrate || true
+            bash deployment/health-check.sh
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Code pulled" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Docker images updated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Services restarted" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Health checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 Application: https://${{ secrets.PRODUCTION_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Job 4: Security Scan (Optional)
+  # ============================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

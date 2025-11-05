@@ -1,0 +1,90 @@
+# Multi-stage Dockerfile for Next.js 15 Frontend
+# Optimized with standalone output for minimal image size
+
+# ============================================
+# Stage 1: Dependencies - Install all deps
+# ============================================
+FROM node:20-alpine AS dependencies
+
+WORKDIR /app
+
+# Copy package files for all workspaces
+COPY package*.json ./
+COPY packages/ui/package.json ./packages/ui/
+COPY apps/frontend/package.json ./apps/frontend/
+
+# Install ALL dependencies
+RUN npm ci
+
+# ============================================
+# Stage 2: Builder - Build Next.js app
+# ============================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy dependencies from previous stage
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/packages/ui/node_modules ./packages/ui/node_modules
+COPY --from=dependencies /app/apps/frontend/node_modules ./apps/frontend/node_modules
+
+# Copy package files
+COPY package*.json ./
+COPY packages/ui/package.json ./packages/ui/
+COPY apps/frontend/package.json ./apps/frontend/
+
+# Copy source code
+COPY packages/ui/ ./packages/ui/
+COPY apps/frontend/ ./apps/frontend/
+COPY tsconfig.json ./
+
+# Set environment to production for optimal build
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Build UI package first (if it has a build step)
+# RUN npm run build -w @concentrate/ui || true
+
+# Build Next.js app with standalone output
+WORKDIR /app/apps/frontend
+RUN npm run build
+
+# ============================================
+# Stage 3: Runtime - Minimal production image
+# ============================================
+FROM node:20-alpine AS runtime
+
+# Set production environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+WORKDIR /app
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init curl
+
+# Create non-root user for security
+RUN addgroup -g 1000 node && \
+    adduser -u 1000 -G node -s /bin/sh -D node || true
+
+# Copy standalone output from builder
+# Next.js standalone mode includes all dependencies
+COPY --from=builder --chown=node:node /app/apps/frontend/.next/standalone ./
+COPY --from=builder --chown=node:node /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder --chown=node:node /app/apps/frontend/public ./apps/frontend/public
+
+# Switch to non-root user
+USER node
+
+# Expose frontend port
+EXPOSE 3000
+
+# Health check - verify Next.js server is responding
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:3000/ || exit 1
+
+# Start Next.js server with dumb-init
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "apps/frontend/server.js"]

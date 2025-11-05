@@ -1,0 +1,52 @@
+# Production overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  # API - Production Configuration
+  api:
+    env_file:
+      - .env.docker.prod
+    environment:
+      NODE_ENV: production
+    ports: []  # Don't expose port directly, only through nginx
+    volumes: []  # Remove hot reload volumes
+    healthcheck:
+      interval: 60s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # Frontend - Production Configuration
+  frontend:
+    env_file:
+      - .env.docker.prod
+    environment:
+      NODE_ENV: production
+    ports: []  # Don't expose port directly, only through nginx
+    volumes: []  # Remove hot reload volumes
+    healthcheck:
+      interval: 60s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # Nginx - Production Configuration
+  nginx:
+    # Production nginx might need HTTPS configuration updated
+    # SSL certificates will be mounted from certbot
+    healthcheck:
+      interval: 60s
+
+  # Certbot - SSL Certificate Management
+  certbot:
+    image: certbot/certbot:latest
+    container_name: school-portal-certbot
+    restart: unless-stopped
+    volumes:
+      - nginx_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    networks:
+      - concentrate-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
+    depends_on:
+      - nginx
