@@ -71,18 +71,12 @@ RUN addgroup -g 1000 node && \
 COPY --from=production-deps --chown=node:node /app/node_modules ./node_modules
 
 # Copy built artifacts from builder stage
-COPY --from=builder --chown=node:node /app/packages/database/dist ./packages/database/dist
-COPY --from=builder --chown=node:node /app/packages/validation/dist ./packages/validation/dist
-COPY --from=builder --chown=node:node /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=node:node /app/packages/services/dist ./packages/services/dist
+# Copy entire packages directory to preserve npm workspace symlink structure
+COPY --from=builder --chown=node:node /app/packages ./packages
 COPY --from=builder --chown=node:node /app/apps/api/dist ./apps/api/dist
 
 # Copy package.json files (needed for module resolution)
 COPY --chown=node:node package*.json ./
-COPY --chown=node:node packages/database/package.json ./packages/database/
-COPY --chown=node:node packages/validation/package.json ./packages/validation/
-COPY --chown=node:node packages/shared/package.json ./packages/shared/
-COPY --chown=node:node packages/services/package.json ./packages/services/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 # Switch to non-root user
