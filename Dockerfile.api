@@ -8,13 +8,22 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files for dependency installation
+# Copy package files AND tsconfig files for dependency installation
+# Root tsconfig.json is needed for TypeScript project references
 COPY package*.json ./
+COPY tsconfig.json ./
+
+# Copy all package.json and tsconfig.json files for proper TypeScript compilation
 COPY packages/database/package.json ./packages/database/
+COPY packages/database/tsconfig.json ./packages/database/
 COPY packages/validation/package.json ./packages/validation/
+COPY packages/validation/tsconfig.json ./packages/validation/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/tsconfig.json ./packages/shared/
 COPY packages/services/package.json ./packages/services/
+COPY packages/services/tsconfig.json ./packages/services/
 COPY apps/api/package.json ./apps/api/
+COPY apps/api/tsconfig.json ./apps/api/
 
 # Install ALL dependencies (including devDependencies for build)
 RUN npm ci
@@ -22,7 +31,6 @@ RUN npm ci
 # Copy source code
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
-COPY tsconfig.json ./
 
 # Build packages first, then API
 RUN npm run build:packages && \
