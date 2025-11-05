@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/contexts/AuthContext';
@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { studentApi } from '@/lib/api/studentApi';
 import type { Assignment } from '@/types/student';
 
-export default function AssignmentsPage() {
+function AssignmentsContent() {
   const { user, isLoading: authLoading } = useRequireAuth(['student']);
   const searchParams = useSearchParams();
   const classIdFilter = searchParams.get('classId');
@@ -151,5 +151,17 @@ export default function AssignmentsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AssignmentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
+        <p className="text-lg font-mono text-neutral-700">Loading...</p>
+      </div>
+    }>
+      <AssignmentsContent />
+    </Suspense>
   );
 }
