@@ -36,6 +36,17 @@ COPY apps/api/ ./apps/api/
 RUN npm run build:packages && \
     npm run build -w @concentrate/api
 
+# CRITICAL: Build verification - Ensure all TypeScript compiled successfully
+# This will FAIL the build if any dist folders are missing
+RUN echo "=== Build Verification ===" && \
+    ls -la packages/database/dist/index.js && \
+    ls -la packages/validation/dist/index.js && \
+    ls -la packages/shared/dist/index.js && \
+    ls -la packages/services/dist/index.js && \
+    ls -la apps/api/dist/server.js && \
+    echo "✓ All packages compiled successfully" || \
+    (echo "✗ Build FAILED: Missing dist folders!" && exit 1)
+
 # ============================================
 # Stage 2: Production Dependencies
 # ============================================

@@ -48,12 +48,22 @@ ENV NEXT_ESLINT_IGNORE=true
 
 # Build Next.js app with standalone output
 WORKDIR /app/apps/frontend
-# Add debugging to see what's created
-RUN npm run build && \
-    echo "=== Checking build output ===" && \
+RUN npm run build
+
+# CRITICAL: Build verification - Ensure Next.js built successfully
+# This will FAIL the build if required files are missing
+RUN echo "=== Build Verification ===" && \
+    echo "Checking .next directory structure..." && \
     ls -la .next/ && \
-    echo "=== Checking for standalone ===" && \
-    ls -la .next/standalone/ || echo "No standalone directory found"
+    echo "Verifying standalone output exists..." && \
+    test -d .next/standalone && \
+    test -d .next/standalone/apps/frontend && \
+    test -f .next/standalone/apps/frontend/server.js && \
+    echo "✓ Next.js standalone build successful" || \
+    (echo "✗ Build FAILED: Missing standalone output or server.js!" && \
+     echo "Expected: .next/standalone/apps/frontend/server.js" && \
+     ls -la .next/standalone/ 2>/dev/null || echo "standalone directory does not exist" && \
+     exit 1)
 
 # ============================================
 # Stage 3: Runtime - Minimal production image

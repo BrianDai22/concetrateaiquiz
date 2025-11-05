@@ -9,7 +9,7 @@ services:
     environment:
       NODE_ENV: production
     ports: []  # Don't expose port directly, only through nginx
-    volumes: []  # Remove hot reload volumes
+    # CRITICAL: Completely omit volumes key to prevent inheritance from base compose
     healthcheck:
       interval: 60s
       timeout: 10s
@@ -23,7 +23,7 @@ services:
     environment:
       NODE_ENV: production
     ports: []  # Don't expose port directly, only through nginx
-    volumes: []  # Remove hot reload volumes
+    # CRITICAL: Completely omit volumes key to prevent inheritance from base compose
     healthcheck:
       interval: 60s
       timeout: 10s
