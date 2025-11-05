@@ -66,6 +66,37 @@ echo "Current volumes:"
 docker volume ls | grep -E "(concentrate|school-portal)" || echo "  No project volumes found (good!)"
 echo ""
 
+# Step 5.5: Verify production configuration has no source code volumes
+print_status "Step 5.5: Verifying production configuration..."
+echo "Checking merged docker-compose configuration for volume mounts..."
+
+# Generate merged configuration
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config > /tmp/merged-config.yml 2>/dev/null
+
+# Check if any source code mounts exist in the merged configuration
+if grep -A 10 "api:" /tmp/merged-config.yml | grep -q "/app/apps/api/src" || \
+   grep -A 10 "api:" /tmp/merged-config.yml | grep -q "/app/packages" || \
+   grep -A 10 "frontend:" /tmp/merged-config.yml | grep -q "/app/apps/frontend"; then
+    print_error "CRITICAL: Source code volume mounts detected in merged configuration!"
+    print_error "This means docker-compose.prod.yml is NOT properly overriding volumes."
+    echo ""
+    echo "Merged configuration shows:"
+    echo "API volumes:"
+    grep -A 15 "api:" /tmp/merged-config.yml | grep -B 2 -A 2 "volumes" || echo "  No volumes section found"
+    echo ""
+    echo "Frontend volumes:"
+    grep -A 15 "frontend:" /tmp/merged-config.yml | grep -B 2 -A 2 "volumes" || echo "  No volumes section found"
+    echo ""
+    print_error "Fix required: Ensure docker-compose.prod.yml uses 'volumes: !reset []'"
+    print_error "Your Docker Compose version may not support !reset - check with: docker compose version"
+    rm /tmp/merged-config.yml
+    exit 1
+fi
+
+print_status "Configuration verified: No source code mounts in production config"
+rm /tmp/merged-config.yml
+echo ""
+
 # Step 6: Build with production configuration
 print_status "Step 6: Building fresh images (this will take several minutes)..."
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build \
