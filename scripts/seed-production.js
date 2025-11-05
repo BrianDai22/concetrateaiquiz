@@ -1,6 +1,6 @@
 // Production seed script for creating test users
-const { db } = require('@concentrate/database');
-const bcrypt = require('bcrypt');
+const { db } = require('/app/packages/database/dist');
+const { hashPassword } = require('/app/packages/shared/dist/utils/password');
 
 async function seedUsers() {
   try {
@@ -10,19 +10,19 @@ async function seedUsers() {
       {
         email: 'admin@school.edu',
         password: 'Admin123!@#',
-        full_name: 'Admin User',
+        name: 'Admin User',
         role: 'admin',
       },
       {
         email: 'teacher@school.edu',
         password: 'Teacher123!@#',
-        full_name: 'Teacher User',
+        name: 'Teacher User',
         role: 'teacher',
       },
       {
         email: 'student@school.edu',
         password: 'Student123!@#',
-        full_name: 'Student User',
+        name: 'Student User',
         role: 'student',
       },
     ];
@@ -37,14 +37,14 @@ async function seedUsers() {
 
       if (existing) {
         // Update existing user
-        const hashedPassword = await bcrypt.hash(user.password, 10);
+        const hashedPassword = await hashPassword(user.password);
         await db
           .updateTable('users')
           .set({
             password_hash: hashedPassword,
-            full_name: user.full_name,
+            name: user.name,
             role: user.role,
-            is_suspended: false,
+            suspended: false,
             updated_at: new Date(),
           })
           .where('id', '=', existing.id)
@@ -52,15 +52,15 @@ async function seedUsers() {
         console.log(`Updated existing user: ${user.email}`);
       } else {
         // Create new user
-        const hashedPassword = await bcrypt.hash(user.password, 10);
+        const hashedPassword = await hashPassword(user.password);
         await db
           .insertInto('users')
           .values({
             email: user.email,
             password_hash: hashedPassword,
-            full_name: user.full_name,
+            name: user.name,
             role: user.role,
-            is_suspended: false,
+            suspended: false,
             created_at: new Date(),
             updated_at: new Date(),
           })
