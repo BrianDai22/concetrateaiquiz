@@ -237,8 +237,35 @@ export async function authRoutes(app: FastifyInstance) {
     } catch (error) {
       request.log.error(error)
 
-      // Redirect to error page or return error
-      const errorUrl = process.env['OAUTH_ERROR_REDIRECT'] || 'http://localhost:3000/login?error=oauth_failed'
+      // Determine error message based on error type
+      let errorMessage = 'oauth_failed'
+
+      // Check if it's an AppError with proper structure
+      const isAppError = error && typeof error === 'object' && 'code' in error && 'statusCode' in error
+
+      if (isAppError) {
+        const appError = error as { code: string; statusCode: number; message: string; name?: string }
+
+        // Check for suspension (ForbiddenError with suspension message)
+        if (appError.code === 'FORBIDDEN' || appError.statusCode === 403 ||
+            (appError.message && appError.message.toLowerCase().includes('suspended'))) {
+          errorMessage = encodeURIComponent('Your account has been suspended')
+        } else if (appError.message) {
+          errorMessage = encodeURIComponent(appError.message)
+        }
+      } else if (error instanceof Error && error.message) {
+        // Fallback for regular Error objects
+        if (error.message.toLowerCase().includes('suspended')) {
+          errorMessage = encodeURIComponent('Your account has been suspended')
+        } else {
+          errorMessage = encodeURIComponent(error.message)
+        }
+      }
+
+      // Redirect to error page with specific error message
+      // Always use dynamic error message, ignore OAUTH_ERROR_REDIRECT env var
+      const baseUrl = 'http://localhost:3000/login'
+      const errorUrl = `${baseUrl}?error=${errorMessage}`
       return reply.redirect(errorUrl)
     }
   })

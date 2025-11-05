@@ -7,6 +7,7 @@ import {
   AlreadyExistsError,
   NotFoundError,
   InvalidCredentialsError,
+  ForbiddenError,
 } from '@concentrate/shared'
 
 /**
@@ -159,6 +160,11 @@ export class OAuthService {
         id_token: tokens.id_token || null,
         session_state: null,
       })
+    }
+
+    // Check if user is suspended (same check as regular login)
+    if (user.suspended) {
+      throw new ForbiddenError('Your account has been suspended')
     }
 
     // Generate JWT tokens (same as regular login)

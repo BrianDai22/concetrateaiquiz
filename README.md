@@ -4,7 +4,7 @@ Welcome! This is a hiring assessment for full-stack engineering positions at Con
 
 ## Overview
 
-**Read the full specifications in [SPECS.md](./docs/planning/SPECS.md)**
+**Read the full specifications in [SPECS.md](SPECS.md)**
 
 ## Getting Started
 
