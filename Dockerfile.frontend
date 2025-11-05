@@ -43,6 +43,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Skip linting during Docker build to avoid build failures
 ENV NEXT_ESLINT_IGNORE=true
 
+# Accept build arguments for Next.js public environment variables
+# These are baked into the build at compile time
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_KEYCLOAK_URL
+
+# Set environment variables from build args
+# These must be set before npm run build for Next.js to pick them up
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+ENV NEXT_PUBLIC_KEYCLOAK_URL=${NEXT_PUBLIC_KEYCLOAK_URL}
+
 # Build UI package first (if it has a build step)
 # RUN npm run build -w @concentrate/ui || true
 

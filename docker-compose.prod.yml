@@ -18,6 +18,13 @@ services:
 
   # Frontend - Production Configuration
   frontend:
+    build:
+      args:
+        # These environment variables are baked into the build at compile time
+        # They must match the values in .env.docker.prod
+        NEXT_PUBLIC_API_URL: http://35.225.50.31/api/v0
+        NEXT_PUBLIC_APP_URL: http://35.225.50.31
+        NEXT_PUBLIC_KEYCLOAK_URL: http://35.225.50.31
     env_file:
       - .env.docker.prod
     environment:

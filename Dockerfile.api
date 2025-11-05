@@ -26,6 +26,7 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/api/tsconfig.json ./apps/api/
 
 # Install ALL dependencies (including devDependencies for build)
+# This creates node_modules with workspace symlinks
 RUN npm ci
 
 # Copy source code
@@ -47,27 +48,12 @@ RUN echo "=== Build Verification ===" && \
     echo "✓ All packages compiled successfully" || \
     (echo "✗ Build FAILED: Missing dist folders!" && exit 1)
 
-# ============================================
-# Stage 2: Production Dependencies
-# ============================================
-FROM node:20-alpine AS production-deps
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-COPY packages/database/package.json ./packages/database/
-COPY packages/validation/package.json ./packages/validation/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/services/package.json ./packages/services/
-COPY apps/api/package.json ./apps/api/
-
-# Install ONLY production dependencies
-# npm workspaces installs to root node_modules
-RUN npm ci --omit=dev
+# CRITICAL: Prune dev dependencies while keeping workspace symlinks
+# This removes devDependencies but preserves the workspace structure
+RUN npm prune --production
 
 # ============================================
-# Stage 3: Runtime - Minimal production image
+# Stage 2: Runtime - Minimal production image
 # ============================================
 FROM node:20-alpine AS runtime
 
@@ -85,17 +71,23 @@ RUN apk add --no-cache dumb-init
 RUN addgroup -g 1000 node && \
     adduser -u 1000 -G node -s /bin/sh -D node || true
 
-# Copy production dependencies from production-deps stage
-# npm workspaces puts all dependencies in root node_modules
-COPY --from=production-deps --chown=node:node /app/node_modules ./node_modules
+# Copy pruned node_modules from builder (includes workspace symlinks + production deps)
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 
-# Copy built artifacts from builder stage
-# Copy entire packages directory to preserve npm workspace symlink structure
-COPY --from=builder --chown=node:node /app/packages ./packages
+# Copy built dist folders for all workspace packages
+# We need to copy individual dist folders to preserve the correct structure
+COPY --from=builder --chown=node:node /app/packages/database/dist ./packages/database/dist
+COPY --from=builder --chown=node:node /app/packages/validation/dist ./packages/validation/dist
+COPY --from=builder --chown=node:node /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=node:node /app/packages/services/dist ./packages/services/dist
 COPY --from=builder --chown=node:node /app/apps/api/dist ./apps/api/dist
 
 # Copy package.json files (needed for module resolution)
 COPY --chown=node:node package*.json ./
+COPY --chown=node:node packages/database/package.json ./packages/database/
+COPY --chown=node:node packages/validation/package.json ./packages/validation/
+COPY --chown=node:node packages/shared/package.json ./packages/shared/
+COPY --chown=node:node packages/services/package.json ./packages/services/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 # Switch to non-root user
