@@ -30,6 +30,9 @@ services:
       - .env.docker.prod
     environment:
       NODE_ENV: production
+      # Override base docker-compose.yml runtime env vars for production
+      NEXT_PUBLIC_API_URL: http://35.225.50.31
+      NEXT_PUBLIC_APP_URL: http://35.225.50.31
     ports: []  # Don't expose port directly, only through nginx
     volumes: !reset []  # CRITICAL: Use !reset to explicitly clear all volume mounts from base compose
     healthcheck:
