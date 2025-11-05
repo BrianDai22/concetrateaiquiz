@@ -5,6 +5,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // Use jsdom for frontend component tests, node for everything else
+    environmentMatchGlobs: [
+      ['apps/frontend/**/*.test.{ts,tsx}', 'jsdom'],
+      ['apps/frontend/**/*.spec.{ts,tsx}', 'jsdom']
+    ],
     coverage: {
       enabled: true,
       provider: 'v8',
@@ -52,7 +57,7 @@ export default defineConfig({
       'coverage',
       '**/*.e2e.{test,spec}.ts'
     ],
-    setupFiles: ['./test/setup.ts'],
+    setupFiles: ['./test/setup.ts', './test/dom-setup.ts'],
     testTimeout: 10000,
     bail: 1,
     retry: 0,
@@ -63,7 +68,8 @@ export default defineConfig({
       '@concentrate/database': resolve(__dirname, './packages/database/src'),
       '@concentrate/validation': resolve(__dirname, './packages/validation/src'),
       '@concentrate/shared': resolve(__dirname, './packages/shared/src'),
-      '@concentrate/ui': resolve(__dirname, './packages/ui/src')
+      '@concentrate/ui': resolve(__dirname, './packages/ui/src'),
+      '@': resolve(__dirname, './apps/frontend')
     }
   }
 })
