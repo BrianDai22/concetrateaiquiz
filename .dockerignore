@@ -64,6 +64,6 @@ docker-compose*.yml
 .prettierignore
 .eslintrc.json
 .eslintignore
-tsconfig.json
+# tsconfig.json - NEEDED for Docker build!
 vitest.config.ts
 playwright.config.ts
