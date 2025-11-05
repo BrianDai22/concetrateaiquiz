@@ -91,22 +91,36 @@ export default function ClassDetailPage() {
       setIsSubmitting(true);
       setError(null);
 
-      // First, find the student by email (using stats endpoint to get all students)
-      const allStudentsResponse = await apiClient.get<{ students: Student[] }>(
-        '/api/v0/stats/student-names'
+      // Search for student by email using the new search endpoint
+      const searchResponse = await apiClient.get<{ users: Student[] }>(
+        `/api/v0/teacher/users/search?email=${encodeURIComponent(studentEmail)}`
       );
 
-      // Since stats endpoint only returns names, we need to use a different approach
-      // Let's use the User endpoint if available, or we can search through enrolled students
-      // For now, we'll need the student ID. This is a limitation - backend needs a GET /users/search endpoint
+      if (!searchResponse.users || searchResponse.users.length === 0) {
+        setError('No student found with that email. Please check the email address.');
+        return;
+      }
 
-      // Temporary workaround: Ask for student ID instead
-      setError(
-        'Feature requires student ID. Backend needs a user search endpoint. Please use student ID for now.'
+      const student = searchResponse.users[0];
+
+      // Add student to class
+      try {
+        await teacherApi.addStudentToClass(classId, { studentId: student.id });
+      } catch (enrollError) {
+        setError(
+          `Failed to add student: ${enrollError instanceof Error ? enrollError.message : 'Unknown error'}. Student email: ${student.email}, ID: ${student.id}`
+        );
+        return;
+      }
+
+      // Refresh students list
+      const studentsResponse = await apiClient.get<{ students: Student[] }>(
+        `/api/v0/stats/classes/${classId}`
       );
+      setStudents(studentsResponse.students || []);
 
-      // TODO: Implement when backend has user search endpoint
-      // await teacherApi.addStudentToClass(classId, { studentId });
+      setShowAddModal(false);
+      setStudentEmail('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add student');
     } finally {
@@ -204,6 +218,9 @@ export default function ClassDetailPage() {
                   className="flex justify-between items-center p-3 bg-neutral-50 rounded-[2px] border border-neutral-200"
                 >
                   <div>
+                    {/* Student data from stats endpoint - name displayed directly from full user object.
+                        Note: Stats endpoint returns complete user objects with name and email.
+                        Fallback to studentId would only occur if user was deleted from database. */}
                     <p className="text-sm font-mono text-neutral-700">{student.name}</p>
                     <p className="text-xs text-neutral-500 font-mono">{student.email}</p>
                   </div>

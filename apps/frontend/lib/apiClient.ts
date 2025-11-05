@@ -1,3 +1,5 @@
+import { toCamelCase } from './caseConverter';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface ApiError {
@@ -61,7 +63,9 @@ class ApiClient {
       return {} as T;
     }
 
-    return response.json();
+    // Parse JSON response and convert all snake_case keys to camelCase
+    const data = await response.json();
+    return toCamelCase(data) as T;
   }
 
   async get<T>(url: string): Promise<T> {

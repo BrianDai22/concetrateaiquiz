@@ -198,7 +198,7 @@ export default function TeacherClassesPage() {
               )}
               <div className="mt-auto pt-4 border-t border-neutral-200">
                 <p className="text-xs text-neutral-500 font-mono mb-3">
-                  Created {new Date((classItem as any).created_at || classItem.createdAt).toLocaleDateString()}
+                  Created {new Date(classItem.createdAt).toLocaleDateString()}
                 </p>
                 <div className="flex gap-2">
                   <Link

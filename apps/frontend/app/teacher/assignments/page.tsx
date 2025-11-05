@@ -12,6 +12,7 @@ import type {
   Class,
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
+  AssignmentStats,
 } from '@/types/teacher';
 
 export default function TeacherAssignmentsPage() {
@@ -20,6 +21,7 @@ export default function TeacherAssignmentsPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [filteredAssignments, setFilteredAssignments] = useState<Assignment[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
+  const [assignmentStats, setAssignmentStats] = useState<Map<string, AssignmentStats>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +51,20 @@ export default function TeacherAssignmentsPage() {
         ]);
         setAssignments(assignmentsData);
         setClasses(classesData);
+
+        // Fetch submission stats for each assignment
+        const statsPromises = assignmentsData.map(async (assignment) => {
+          try {
+            const stats = await teacherApi.getAssignmentStats(assignment.id);
+            return { id: assignment.id, stats };
+          } catch {
+            return { id: assignment.id, stats: { total: 0, graded: 0, ungraded: 0 } };
+          }
+        });
+        const statsResults = await Promise.all(statsPromises);
+        const statsMap = new Map(statsResults.map((r) => [r.id, r.stats]));
+        setAssignmentStats(statsMap);
+
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -68,7 +84,7 @@ export default function TeacherAssignmentsPage() {
       setFilteredAssignments(assignments);
     } else {
       setFilteredAssignments(
-        assignments.filter((a) => ((a as any).class_id || a.classId) === selectedClassId)
+        assignments.filter((a) => a.classId === selectedClassId)
       );
     }
   }, [selectedClassId, assignments]);
@@ -169,12 +185,11 @@ export default function TeacherAssignmentsPage() {
   // Open edit modal
   const openEditModal = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
-    const dueDate = (assignment as any).due_date || assignment.dueDate;
     setFormData({
-      classId: (assignment as any).class_id || assignment.classId,
+      classId: assignment.classId,
       title: assignment.title,
       description: assignment.description,
-      dueDate: dueDate.split('T')[0], // Convert to YYYY-MM-DD
+      dueDate: assignment.dueDate.split('T')[0], // Convert to YYYY-MM-DD
     });
     setShowEditModal(true);
   };
@@ -254,8 +269,6 @@ export default function TeacherAssignmentsPage() {
 
         <div className="space-y-4">
           {filteredAssignments.map((assignment) => {
-            const dueDate = (assignment as any).due_date || assignment.dueDate;
-            const classId = (assignment as any).class_id || assignment.classId;
             return (
               <Card key={assignment.id}>
                 <div className="flex justify-between items-start">
@@ -264,7 +277,7 @@ export default function TeacherAssignmentsPage() {
                       <h2 className="text-xl font-mono text-neutral-700 uppercase">
                         {assignment.title}
                       </h2>
-                      {isOverdue(dueDate) && (
+                      {isOverdue(assignment.dueDate) && (
                         <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-mono uppercase rounded-[2px]">
                           Overdue
                         </span>
@@ -274,8 +287,13 @@ export default function TeacherAssignmentsPage() {
                       {assignment.description}
                     </p>
                     <div className="flex gap-4 text-xs text-neutral-500 font-mono">
-                      <span>Class: {getClassName(classId)}</span>
-                      <span>Due: {new Date(dueDate).toLocaleDateString()}</span>
+                      <span>Class: {getClassName(assignment.classId)}</span>
+                      <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                      {assignmentStats.get(assignment.id) && (
+                        <span>
+                          Submissions: {assignmentStats.get(assignment.id)!.total} ({assignmentStats.get(assignment.id)!.graded} graded)
+                        </span>
+                      )}
                     </div>
                   </div>
                 <div className="flex gap-2 ml-4">
