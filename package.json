@@ -19,7 +19,9 @@
     "test:e2e": "playwright test",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md,json}\"",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:migrate": "npm run migrate -w @concentrate/database",
+    "db:seed": "npm run seed -w @concentrate/database"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

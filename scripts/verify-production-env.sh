@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Production Environment Verification Script
 # Run this on your GCP VM to check environment configuration
 
@@ -57,16 +57,16 @@ if docker ps --format "{{.Names}}" | grep -q "^school-portal-api$"; then
     echo "    NODE_ENV: $NODE_ENV"
 
     # Check if DATABASE_URL is set
-    docker exec school-portal-api bash -c 'test -n "$DATABASE_URL" && echo "    DATABASE_URL: ✓ Set" || echo "    DATABASE_URL: ✗ Not set"' 2>/dev/null || echo "    DATABASE_URL: Error checking"
+    docker exec school-portal-api sh -c 'test -n "$DATABASE_URL" && echo "    DATABASE_URL: ✓ Set" || echo "    DATABASE_URL: ✗ Not set"' 2>/dev/null || echo "    DATABASE_URL: Error checking"
 
     # Check if REDIS_URL is set
-    docker exec school-portal-api bash -c 'test -n "$REDIS_URL" && echo "    REDIS_URL: ✓ Set" || echo "    REDIS_URL: ✗ Not set"' 2>/dev/null || echo "    REDIS_URL: Error checking"
+    docker exec school-portal-api sh -c 'test -n "$REDIS_URL" && echo "    REDIS_URL: ✓ Set" || echo "    REDIS_URL: ✗ Not set"' 2>/dev/null || echo "    REDIS_URL: Error checking"
 
     # Check JWT_SECRET strength
-    docker exec school-portal-api bash -c 'if [[ ${#JWT_SECRET} -gt 50 ]] && [[ "$JWT_SECRET" != *"replace"* ]]; then echo "    JWT_SECRET: ✓ Strong"; else echo "    JWT_SECRET: ✗ Weak or default"; fi' 2>/dev/null || echo "    JWT_SECRET: Error checking"
+    docker exec school-portal-api sh -c 'JWT_LEN=$(echo -n "$JWT_SECRET" | wc -c); if [ "$JWT_LEN" -gt 50 ] && [ "$JWT_SECRET" != *"replace"* ]; then echo "    JWT_SECRET: ✓ Strong"; else echo "    JWT_SECRET: ✗ Weak or default"; fi' 2>/dev/null || echo "    JWT_SECRET: Error checking"
 
     # Check COOKIE_SECRET strength
-    docker exec school-portal-api bash -c 'if [[ ${#COOKIE_SECRET} -gt 50 ]] && [[ "$COOKIE_SECRET" != *"replace"* ]]; then echo "    COOKIE_SECRET: ✓ Strong"; else echo "    COOKIE_SECRET: ✗ Weak or default"; fi' 2>/dev/null || echo "    COOKIE_SECRET: Error checking"
+    docker exec school-portal-api sh -c 'COOKIE_LEN=$(echo -n "$COOKIE_SECRET" | wc -c); if [ "$COOKIE_LEN" -gt 50 ] && [ "$COOKIE_SECRET" != *"replace"* ]; then echo "    COOKIE_SECRET: ✓ Strong"; else echo "    COOKIE_SECRET: ✗ Weak or default"; fi' 2>/dev/null || echo "    COOKIE_SECRET: Error checking"
 
     # Check CORS_ORIGIN
     CORS_ORIGIN=$(docker exec school-portal-api printenv CORS_ORIGIN 2>/dev/null || echo "not set")
@@ -113,7 +113,7 @@ fi
 
 # Test Database connectivity from API
 if docker ps --format "{{.Names}}" | grep -q "^school-portal-api$"; then
-    docker exec school-portal-api bash -c 'pg_isready -h postgres -p 5432' >/dev/null 2>&1 && \
+    docker exec school-portal-api sh -c 'pg_isready -h postgres -p 5432' >/dev/null 2>&1 && \
         echo -e "  Database → API: ${GREEN}✓ Connected${NC}" || \
         echo -e "  Database → API: ${RED}✗ Connection failed${NC}"
 else
@@ -122,7 +122,7 @@ fi
 
 # Test Redis connectivity
 if docker ps --format "{{.Names}}" | grep -q "^school-portal-api$"; then
-    docker exec school-portal-api bash -c 'redis-cli -h redis ping' >/dev/null 2>&1 && \
+    docker exec school-portal-api sh -c 'redis-cli -h redis ping' >/dev/null 2>&1 && \
         echo -e "  Redis → API: ${GREEN}✓ Connected${NC}" || \
         echo -e "  Redis → API: ${RED}✗ Connection failed${NC}"
 else
@@ -192,8 +192,8 @@ echo "==========================================${NC}"
 issues=0
 
 # Check for weak secrets
-docker exec school-portal-api bash -c '[[ "$JWT_SECRET" == *"replace"* ]]' 2>/dev/null && ((issues++)) && echo -e "${RED}⚠ JWT_SECRET needs to be updated${NC}"
-docker exec school-portal-api bash -c '[[ "$COOKIE_SECRET" == *"replace"* ]]' 2>/dev/null && ((issues++)) && echo -e "${RED}⚠ COOKIE_SECRET needs to be updated${NC}"
+docker exec school-portal-api sh -c 'case "$JWT_SECRET" in *replace*) exit 0 ;; *) exit 1 ;; esac' 2>/dev/null && issues=$((issues+1)) && echo -e "${RED}⚠ JWT_SECRET needs to be updated${NC}"
+docker exec school-portal-api sh -c 'case "$COOKIE_SECRET" in *replace*) exit 0 ;; *) exit 1 ;; esac' 2>/dev/null && issues=$((issues+1)) && echo -e "${RED}⚠ COOKIE_SECRET needs to be updated${NC}"
 
 # Check for unhealthy containers
 unhealthy=$(docker ps --filter "health=unhealthy" --format "{{.Names}}" | grep -E "school-portal|concentrate" | wc -l)
