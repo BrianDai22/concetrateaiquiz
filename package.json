@@ -12,7 +12,7 @@
     "dev:web": "npm run dev -w @concentrate/web",
     "dev:api": "npm run dev -w @concentrate/api",
     "build": "npm run build:packages && npm run build:apps",
-    "build:packages": "npm run build -w @concentrate/database && npm run build -w @concentrate/validation && npm run build -w @concentrate/shared && npm run build -w @concentrate/ui",
+    "build:packages": "npm run build -w @concentrate/shared && npm run build -w @concentrate/validation && npm run build -w @concentrate/ui && npm run build -w @concentrate/database && npm run build -w @concentrate/services",
     "build:apps": "npm run build -w @concentrate/web && npm run build -w @concentrate/api",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
