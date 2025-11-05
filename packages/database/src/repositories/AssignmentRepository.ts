@@ -8,6 +8,8 @@ import type {
   SubmissionUpdate,
   Grade,
   GradeUpdate,
+  SubmissionWithStudent,
+  GradeWithAssignment,
 } from '../schema'
 
 /**
@@ -308,17 +310,46 @@ export class AssignmentRepository {
   }
 
   /**
-   * Get all submissions for an assignment
+   * Get all submissions for an assignment with student information
    * @param assignmentId - Assignment ID
-   * @returns Array of submissions ordered by submitted_at desc
+   * @returns Array of submissions with student data ordered by submitted_at desc
    */
-  async getSubmissionsByAssignment(assignmentId: string): Promise<Submission[]> {
-    return await this.db
+  async getSubmissionsByAssignment(
+    assignmentId: string
+  ): Promise<SubmissionWithStudent[]> {
+    const results = await this.db
       .selectFrom('submissions')
-      .selectAll()
-      .where('assignment_id', '=', assignmentId)
-      .orderBy('submitted_at', 'desc')
+      .leftJoin('users', 'submissions.student_id', 'users.id')
+      .select([
+        'submissions.id',
+        'submissions.assignment_id',
+        'submissions.student_id',
+        'submissions.content',
+        'submissions.file_url',
+        'submissions.submitted_at',
+        'submissions.updated_at',
+        'users.id as student_user_id',
+        'users.name as student_name',
+        'users.email as student_email',
+      ])
+      .where('submissions.assignment_id', '=', assignmentId)
+      .orderBy('submissions.submitted_at', 'desc')
       .execute()
+
+    return results.map((row) => ({
+      id: row.id,
+      assignment_id: row.assignment_id,
+      student_id: row.student_id,
+      content: row.content,
+      file_url: row.file_url,
+      submitted_at: row.submitted_at,
+      updated_at: row.updated_at,
+      student: {
+        id: row.student_user_id ?? row.student_id,
+        name: row.student_name ?? 'Unknown Student',
+        email: row.student_email ?? 'unknown@example.com',
+      },
+    }))
   }
 
   /**
@@ -492,5 +523,74 @@ export class AssignmentRepository {
       .executeTakeFirst()
 
     return grade ?? null
+  }
+
+  /**
+   * Get all grades for a student with assignment details
+   * @param studentId - Student ID
+   * @returns Array of grades with assignment information
+   */
+  async getGradesWithAssignmentByStudent(
+    studentId: string
+  ): Promise<GradeWithAssignment[]> {
+    const results = await this.db
+      .selectFrom('submissions')
+      .leftJoin('grades', 'submissions.id', 'grades.submission_id')
+      .innerJoin('assignments', 'submissions.assignment_id', 'assignments.id')
+      .select([
+        // Submission fields
+        'submissions.id as submission_id',
+        'submissions.assignment_id as submission_assignment_id',
+        'submissions.student_id as submission_student_id',
+        'submissions.content as submission_content',
+        'submissions.file_url as submission_file_url',
+        'submissions.submitted_at as submission_submitted_at',
+        'submissions.updated_at as submission_updated_at',
+        // Grade fields
+        'grades.id as grade_id',
+        'grades.submission_id as grade_submission_id',
+        'grades.teacher_id as grade_teacher_id',
+        'grades.grade as grade_grade',
+        'grades.feedback as grade_feedback',
+        'grades.graded_at as grade_graded_at',
+        'grades.updated_at as grade_updated_at',
+        // Assignment fields
+        'assignments.id as assignment_id',
+        'assignments.title as assignment_title',
+        'assignments.description as assignment_description',
+        'assignments.due_date as assignment_due_date',
+      ])
+      .where('submissions.student_id', '=', studentId)
+      .orderBy('submissions.submitted_at', 'desc')
+      .execute()
+
+    return results.map((row) => ({
+      submission: {
+        id: row.submission_id,
+        assignment_id: row.submission_assignment_id,
+        student_id: row.submission_student_id,
+        content: row.submission_content,
+        file_url: row.submission_file_url,
+        submitted_at: row.submission_submitted_at,
+        updated_at: row.submission_updated_at,
+      },
+      grade: row.grade_id
+        ? {
+            id: row.grade_id,
+            submission_id: row.grade_submission_id!,
+            teacher_id: row.grade_teacher_id!,
+            grade: row.grade_grade!,
+            feedback: row.grade_feedback,
+            graded_at: row.grade_graded_at!,
+            updated_at: row.grade_updated_at!,
+          }
+        : null,
+      assignment: {
+        id: row.assignment_id,
+        title: row.assignment_title,
+        description: row.assignment_description,
+        dueDate: row.assignment_due_date,
+      },
+    }))
   }
 }

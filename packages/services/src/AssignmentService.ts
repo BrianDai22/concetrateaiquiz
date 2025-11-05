@@ -8,6 +8,7 @@ import type {
   SubmissionUpdate,
   Grade,
   GradeUpdate,
+  GradeWithAssignment,
 } from '@concentrate/database'
 import {
   AssignmentRepository,
@@ -579,6 +580,17 @@ export class AssignmentService {
       return null
     }
     return this.assignmentRepository.getGrade(submission.id)
+  }
+
+  /**
+   * Get all grades for a student with assignment details
+   * @param studentId - Student ID
+   * @returns Array of grades with assignment information
+   */
+  async getGradesWithAssignmentByStudent(
+    studentId: string
+  ): Promise<GradeWithAssignment[]> {
+    return this.assignmentRepository.getGradesWithAssignmentByStudent(studentId)
   }
 
   /**

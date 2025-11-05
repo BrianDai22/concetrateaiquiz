@@ -319,6 +319,14 @@ describe('Student Routes', () => {
       const body = JSON.parse(response.body)
       expect(body.grades.length).toBe(1)
       expect(Number(body.grades[0].grade.grade)).toBe(95)
+
+      // Verify assignment details are included
+      const gradeData = body.grades[0]
+      expect(gradeData).toHaveProperty('assignment')
+      expect(gradeData.assignment).toHaveProperty('id')
+      expect(gradeData.assignment).toHaveProperty('title')
+      expect(gradeData.assignment).toHaveProperty('description')
+      expect(gradeData.assignment).toHaveProperty('dueDate')
     })
 
     it('should handle grade fetch errors gracefully', async () => {

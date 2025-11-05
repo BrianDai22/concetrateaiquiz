@@ -45,6 +45,12 @@ export interface Grade {
 export interface GradeWithSubmission {
   submission: Submission;
   grade: Grade;
+  assignment: {
+    id: string;
+    title: string;
+    description: string;
+    dueDate: string;
+  };
 }
 
 export interface SubmitAssignmentRequest {

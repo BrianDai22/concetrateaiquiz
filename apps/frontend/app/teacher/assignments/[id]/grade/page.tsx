@@ -58,37 +58,10 @@ export default function GradeAssignmentPage() {
 
         setAssignment(foundAssignment);
 
-        // Fetch submissions for this assignment
+        // Fetch submissions for this assignment (includes student data)
         const submissionsData = await teacherApi.getSubmissionsByAssignment(assignmentId);
 
-        // Fetch student names for each submission
-        const submissionsWithStudents = await Promise.all(
-          submissionsData.map(async (sub) => {
-            try {
-              // Fetch student info - we can use the stats endpoint or user endpoint
-              // For now, we'll just use the studentId
-              return {
-                ...sub,
-                student: {
-                  id: sub.studentId,
-                  name: `Student ${sub.studentId.slice(0, 8)}`,
-                  email: 'student@example.com',
-                },
-              };
-            } catch {
-              return {
-                ...sub,
-                student: {
-                  id: sub.studentId,
-                  name: `Student ${sub.studentId.slice(0, 8)}`,
-                  email: 'unknown',
-                },
-              };
-            }
-          })
-        );
-
-        setSubmissions(submissionsWithStudents);
+        setSubmissions(submissionsData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {

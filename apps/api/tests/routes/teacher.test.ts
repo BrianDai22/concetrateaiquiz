@@ -891,7 +891,7 @@ describe('Teacher Routes', () => {
         expect(response.statusCode).toBe(400)
       })
 
-      it('should get submissions for assignment', async () => {
+      it('should get submissions for assignment with student information', async () => {
         // Create assignment first
         const assignmentResponse = await app.inject({
           method: 'POST',
@@ -906,6 +906,17 @@ describe('Teacher Routes', () => {
         })
         const assignment = JSON.parse(assignmentResponse.body).assignment
 
+        // Student submits assignment
+        await app.inject({
+          method: 'POST',
+          url: '/api/v0/student/assignments/submit',
+          cookies: { access_token: studentToken },
+          payload: {
+            assignmentId: assignment.id,
+            content: 'Test submission content',
+          },
+        })
+
         const response = await app.inject({
           method: 'GET',
           url: `/api/v0/teacher/submissions?assignment_id=${assignment.id}`,
@@ -915,6 +926,15 @@ describe('Teacher Routes', () => {
         expect(response.statusCode).toBe(200)
         const body = JSON.parse(response.body)
         expect(Array.isArray(body.submissions)).toBe(true)
+
+        // Verify each submission includes student data
+        if (body.submissions.length > 0) {
+          const submission = body.submissions[0]
+          expect(submission).toHaveProperty('student')
+          expect(submission.student).toHaveProperty('id')
+          expect(submission.student).toHaveProperty('name')
+          expect(submission.student).toHaveProperty('email')
+        }
       })
     })
 

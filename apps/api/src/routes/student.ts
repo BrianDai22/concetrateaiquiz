@@ -132,7 +132,7 @@ export async function studentRoutes(app: FastifyInstance) {
 
   /**
    * GET /student/grades
-   * Get all grades for student
+   * Get all grades for student with assignment details
    */
   app.get(
     '/grades',
@@ -140,25 +140,11 @@ export async function studentRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const assignmentService = new AssignmentService(request.db)
 
-      const submissions = await assignmentService.getSubmissionsByStudent(
+      const grades = await assignmentService.getGradesWithAssignmentByStudent(
         request.user!.userId
       )
 
-      // Get grades for submissions
-      const gradesPromises = submissions.map(async (submission) => {
-        try {
-          const grade = await assignmentService.getGrade(
-            submission.assignment_id,
-            submission.student_id
-          )
-          return { submission, grade }
-        } catch {
-          return { submission, grade: null }
-        }
-      })
-
-      const results = await Promise.all(gradesPromises)
-      return reply.send({ grades: results.filter((r) => r.grade !== null) })
+      return reply.send({ grades: grades.filter((g) => g.grade !== null) })
     }
   )
 

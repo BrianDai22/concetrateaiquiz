@@ -93,13 +93,13 @@ export default function GradesPage() {
         )}
 
         <div className="space-y-4">
-          {grades.map(({ submission, grade }) => (
+          {grades.map(({ submission, grade, assignment }) => (
             <Card key={grade.id}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-4 mb-3">
                     <h2 className="text-xl font-mono text-neutral-700 uppercase">
-                      Assignment #{submission.assignmentId.slice(0, 8)}
+                      {assignment.title}
                     </h2>
                     <span
                       className={`text-2xl font-mono font-bold ${getGradeColor(grade.grade)}`}

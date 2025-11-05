@@ -154,3 +154,23 @@ export type OAuthAccountUpdate = Updateable<OAuthAccountsTable>
 export type Session = Selectable<SessionsTable>
 export type NewSession = Insertable<SessionsTable>
 export type SessionUpdate = Updateable<SessionsTable>
+
+// Extended types with joined data
+export interface SubmissionWithStudent extends Submission {
+  student: {
+    id: string
+    name: string
+    email: string
+  }
+}
+
+export interface GradeWithAssignment {
+  submission: Submission
+  grade: Grade | null
+  assignment: {
+    id: string
+    title: string
+    description: string
+    dueDate: Date
+  }
+}
