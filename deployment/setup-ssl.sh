@@ -21,7 +21,7 @@ echo "========================================"
 
 # Ensure nginx is stopped
 echo "Stopping nginx service..."
-docker-compose stop nginx 2>/dev/null || true
+docker compose stop nginx 2>/dev/null || true
 
 # Create directories if they don't exist
 mkdir -p nginx_certs
@@ -63,16 +63,16 @@ fi
 
 # Start nginx
 echo "Starting nginx with SSL..."
-docker-compose up -d nginx
+docker compose up -d nginx
 
 # Wait for nginx to start
 sleep 5
 
 # Verify nginx is running
-if docker-compose ps nginx | grep -q "Up"; then
+if docker compose ps nginx | grep -q "Up"; then
   echo "✓ Nginx is running with SSL!"
 else
-  echo "ERROR: Nginx failed to start. Check logs with: docker-compose logs nginx"
+  echo "ERROR: Nginx failed to start. Check logs with: docker compose logs nginx"
   exit 1
 fi
 
@@ -86,7 +86,7 @@ fi
 
 # Setup auto-renewal with certbot container
 echo "Setting up auto-renewal..."
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d certbot
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d certbot
 
 echo "========================================"
 echo "SSL Setup Complete!"
@@ -97,7 +97,7 @@ echo ""
 echo "Next steps:"
 echo "1. Verify HTTPS works: https://$DOMAIN"
 echo "2. Certificate auto-renews every 12 hours via certbot container"
-echo "3. Check renewal with: docker-compose exec certbot certbot renew --dry-run"
+echo "3. Check renewal with: docker compose exec certbot certbot renew --dry-run"
 echo ""
 echo "Your site should now be accessible at: https://$DOMAIN"
 echo "========================================"

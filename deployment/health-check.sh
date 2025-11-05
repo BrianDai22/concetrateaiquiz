@@ -39,32 +39,32 @@ check_service() {
 check_service "Docker" "docker info"
 
 # Check Docker Compose
-check_service "Docker Compose" "docker-compose --version"
+check_service "Docker Compose" "docker compose version"
 
 # Check if containers are running
 echo ""
 echo "Container Status:"
 echo "----------------"
-docker-compose ps
+docker compose ps
 
 echo ""
 echo "Service Health Checks:"
 echo "---------------------"
 
 # Check PostgreSQL
-check_service "PostgreSQL" "docker-compose exec -T postgres pg_isready -U postgres"
+check_service "PostgreSQL" "docker compose exec -T postgres pg_isready -U postgres"
 
 # Check Redis
-check_service "Redis" "docker-compose exec -T redis redis-cli ping"
+check_service "Redis" "docker compose exec -T redis redis-cli ping"
 
 # Check API
-check_service "API Service" "docker-compose exec -T api node -e \"require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""
+check_service "API Service" "docker compose exec -T api node -e \"require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""
 
 # Check Frontend
 if command -v wget &> /dev/null; then
-  check_service "Frontend" "docker-compose exec -T frontend wget --no-verbose --tries=1 --spider http://localhost:3000/"
+  check_service "Frontend" "docker compose exec -T frontend wget --no-verbose --tries=1 --spider http://localhost:3000/"
 elif command -v curl &> /dev/null; then
-  check_service "Frontend" "docker-compose exec -T frontend curl -f http://localhost:3000/ >/dev/null 2>&1"
+  check_service "Frontend" "docker compose exec -T frontend curl -f http://localhost:3000/ >/dev/null 2>&1"
 else
   echo -e "${YELLOW}⚠ Frontend check skipped (wget/curl not available)${NC}"
 fi
@@ -119,8 +119,8 @@ else
   echo "========================================"
   echo ""
   echo "Troubleshooting:"
-  echo "- Check logs: docker-compose logs [service]"
-  echo "- Restart service: docker-compose restart [service]"
+  echo "- Check logs: docker compose logs [service]"
+  echo "- Restart service: docker compose restart [service]"
   echo "- Check documentation: deployment/DEPLOYMENT_GUIDE.md"
   exit 1
 fi
