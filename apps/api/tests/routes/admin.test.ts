@@ -364,6 +364,68 @@ describe('Admin Routes', () => {
     })
   })
 
+  describe('GET /api/v0/admin/users/search', () => {
+    it('should search users by email', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v0/admin/users/search?email=student',
+        cookies: { access_token: adminToken },
+      })
+
+      expect(response.statusCode).toBe(200)
+      const body = JSON.parse(response.body)
+      expect(body.users).toBeDefined()
+      expect(Array.isArray(body.users)).toBe(true)
+      expect(body.users.length).toBeGreaterThan(0)
+      expect(body.users[0].email).toContain('student')
+    })
+
+    it('should filter by role when specified', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v0/admin/users/search?email=admin&role=admin',
+        cookies: { access_token: adminToken },
+      })
+
+      expect(response.statusCode).toBe(200)
+      const body = JSON.parse(response.body)
+      expect(body.users).toBeDefined()
+      expect(Array.isArray(body.users)).toBe(true)
+      if (body.users.length > 0) {
+        expect(body.users[0].role).toBe('admin')
+      }
+    })
+
+    it('should return 400 without email parameter', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v0/admin/users/search',
+        cookies: { access_token: adminToken },
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
+
+    it('should require authentication', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v0/admin/users/search?email=test',
+      })
+
+      expect(response.statusCode).toBe(401)
+    })
+
+    it('should require admin role', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v0/admin/users/search?email=test',
+        cookies: { access_token: teacherToken },
+      })
+
+      expect(response.statusCode).toBe(403)
+    })
+  })
+
   describe('POST /api/v0/admin/users/:id/suspend', () => {
     it('should suspend a user', async () => {
       const response = await app.inject({

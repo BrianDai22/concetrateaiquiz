@@ -357,6 +357,71 @@ describe('Teacher Routes', () => {
         expect(response.statusCode).toBe(204)
       })
     })
+
+    describe('GET /api/v0/teacher/users/search', () => {
+      it('should search for students by email', async () => {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/api/v0/teacher/users/search?email=student',
+          cookies: { access_token: teacherToken },
+        })
+
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.body)
+        expect(body.users).toBeDefined()
+        expect(Array.isArray(body.users)).toBe(true)
+      })
+
+      it('should only return students (not teachers or admins)', async () => {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/api/v0/teacher/users/search?email=admin',
+          cookies: { access_token: teacherToken },
+        })
+
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.body)
+        expect(body.users).toBeDefined()
+        // Should not find admin users since we filter for students only
+        expect(body.users.length).toBe(0)
+      })
+
+      it('should not return suspended students', async () => {
+        // This test assumes suspended students are filtered out
+        const response = await app.inject({
+          method: 'GET',
+          url: '/api/v0/teacher/users/search?email=suspended',
+          cookies: { access_token: teacherToken },
+        })
+
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.body)
+        expect(body.users).toBeDefined()
+        // All returned users should have suspended=false
+        body.users.forEach((user: { suspended: boolean }) => {
+          expect(user.suspended).toBe(false)
+        })
+      })
+
+      it('should return 400 without email parameter', async () => {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/api/v0/teacher/users/search',
+          cookies: { access_token: teacherToken },
+        })
+
+        expect(response.statusCode).toBe(400)
+      })
+
+      it('should require authentication', async () => {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/api/v0/teacher/users/search?email=test',
+        })
+
+        expect(response.statusCode).toBe(401)
+      })
+    })
   })
 
   describe('Assignment Management', () => {
@@ -770,6 +835,48 @@ describe('Teacher Routes', () => {
         })
 
         expect(response.statusCode).toBe(204)
+      })
+    })
+
+    describe('GET /api/v0/teacher/assignments/:id/stats', () => {
+      it('should get submission statistics for assignment', async () => {
+        // Create assignment
+        const assignmentResponse = await app.inject({
+          method: 'POST',
+          url: '/api/v0/teacher/assignments',
+          cookies: { access_token: teacherToken },
+          payload: {
+            classId: classId,
+            title: 'Stats Test Assignment',
+            description: 'Test',
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+        })
+        const assignmentBody = JSON.parse(assignmentResponse.body)
+        const testAssignmentId = assignmentBody.assignment.id
+
+        // Get stats (should be 0 initially)
+        const response = await app.inject({
+          method: 'GET',
+          url: `/api/v0/teacher/assignments/${testAssignmentId}/stats`,
+          cookies: { access_token: teacherToken },
+        })
+
+        expect(response.statusCode).toBe(200)
+        const body = JSON.parse(response.body)
+        expect(body.stats).toBeDefined()
+        expect(body.stats.total).toBe(0)
+        expect(body.stats.graded).toBe(0)
+        expect(body.stats.ungraded).toBe(0)
+      })
+
+      it('should require authentication', async () => {
+        const response = await app.inject({
+          method: 'GET',
+          url: `/api/v0/teacher/assignments/some-id/stats`,
+        })
+
+        expect(response.statusCode).toBe(401)
       })
     })
 

@@ -86,3 +86,9 @@ export interface AssignmentWithSubmissionCount extends Assignment {
   submissionCount?: number;
   gradedCount?: number;
 }
+
+export interface AssignmentStats {
+  total: number;
+  graded: number;
+  ungraded: number;
+}

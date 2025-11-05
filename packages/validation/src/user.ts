@@ -130,6 +130,47 @@ export const UserQuerySchema = z.object({
 })
 
 /**
+ * User search validation schema
+ * For searching users by email (admin and teacher use)
+ */
+export const UserSearchSchema = z.object({
+  email: z
+    .string({
+      invalid_type_error: 'Email must be a string',
+    })
+    .trim()
+    .toLowerCase()
+    .optional(),
+  role: z
+    .enum([USER_ROLES.ADMIN, USER_ROLES.TEACHER, USER_ROLES.STUDENT], {
+      invalid_type_error: 'Invalid role',
+    })
+    .optional(),
+  page: z
+    .string({
+      invalid_type_error: 'Page must be a string',
+    })
+    .regex(/^\d+$/, 'Page must be a positive integer')
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive('Page must be a positive integer'))
+    .optional(),
+  limit: z
+    .string({
+      invalid_type_error: 'Limit must be a string',
+    })
+    .regex(/^\d+$/, 'Limit must be a positive integer')
+    .transform((val) => parseInt(val, 10))
+    .pipe(
+      z
+        .number()
+        .int()
+        .positive('Limit must be a positive integer')
+        .max(100, 'Limit must not exceed 100')
+    )
+    .optional(),
+})
+
+/**
  * Suspend user validation schema
  * For suspending or unsuspending user accounts
  */
@@ -174,6 +215,7 @@ export const BatchUserOperationSchema = z.object({
 export type CreateUserInput = z.infer<typeof CreateUserSchema>
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>
 export type UserQueryInput = z.infer<typeof UserQuerySchema>
+export type UserSearchInput = z.infer<typeof UserSearchSchema>
 export type SuspendUserInput = z.infer<typeof SuspendUserSchema>
 export type UserIdParam = z.infer<typeof UserIdParamSchema>
 export type BatchUserOperationInput = z.infer<typeof BatchUserOperationSchema>

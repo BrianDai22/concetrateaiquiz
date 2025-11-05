@@ -18,6 +18,7 @@ import {
   GradeSubmissionSchema,
   AssignmentIdParamSchema,
   SubmissionIdParamSchema,
+  UserSearchSchema,
 } from '@concentrate/validation'
 import { requireAuth } from '../hooks/auth.js'
 import { requireRole } from '../hooks/rbac.js'
@@ -168,6 +169,34 @@ export async function teacherRoutes(app: FastifyInstance) {
     }
   )
 
+  /**
+   * GET /teacher/users/search
+   * Search for students by email to add to class
+   */
+  app.get(
+    '/users/search',
+    { preHandler: [requireAuth, requireRole('teacher')] },
+    async (request, reply) => {
+      const validated = UserSearchSchema.parse(request.query)
+
+      if (!validated.email) {
+        return reply.code(400).send({ error: 'email query parameter required' })
+      }
+
+      // Search for students only (non-suspended)
+      const users = await request.db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', 'ilike', `%${validated.email}%`)
+        .where('role', '=', 'student')
+        .where('suspended', '=', false)
+        .limit(validated.limit || 10)
+        .execute()
+
+      return reply.send({ users })
+    }
+  )
+
   // ============ ASSIGNMENT ROUTES ============
 
   /**
@@ -292,6 +321,26 @@ export async function teacherRoutes(app: FastifyInstance) {
       }
 
       return reply.code(400).send({ error: 'assignment_id query parameter required' })
+    }
+  )
+
+  /**
+   * GET /teacher/assignments/:id/stats
+   * Get submission statistics for an assignment
+   */
+  app.get(
+    '/assignments/:id/stats',
+    { preHandler: [requireAuth, requireRole('teacher')] },
+    async (request, reply) => {
+      const assignmentService = new AssignmentService(request.db)
+      const { id } = AssignmentIdParamSchema.parse(request.params)
+
+      const stats = await assignmentService.getSubmissionStats(
+        id,
+        request.user!.userId
+      )
+
+      return reply.send({ stats })
     }
   )
 

@@ -9,6 +9,7 @@ import {
   CreateUserSchema,
   UpdateUserSchema,
   UserQuerySchema,
+  UserSearchSchema,
   UserIdParamSchema,
 } from '@concentrate/validation'
 import { requireAuth } from '../hooks/auth.js'
@@ -105,6 +106,33 @@ export async function adminRoutes(app: FastifyInstance) {
 
       await userService.deleteUser(id)
       return reply.code(204).send()
+    }
+  )
+
+  /**
+   * GET /admin/users/search
+   * Search users by email
+   */
+  app.get(
+    '/users/search',
+    { preHandler: [requireAuth, requireRole('admin')] },
+    async (request, reply) => {
+      const validated = UserSearchSchema.parse(request.query)
+
+      if (!validated.email) {
+        return reply.code(400).send({ error: 'email query parameter required' })
+      }
+
+      // Search users by email with optional role filter
+      const users = await request.db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', 'ilike', `%${validated.email}%`)
+        .$if(!!validated.role, (qb) => qb.where('role', '=', validated.role!))
+        .limit(validated.limit || 10)
+        .execute()
+
+      return reply.send({ users })
     }
   )
 

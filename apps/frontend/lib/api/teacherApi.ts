@@ -11,6 +11,7 @@ import type {
   AddStudentRequest,
   AddMultipleStudentsRequest,
   GradeSubmissionRequest,
+  AssignmentStats,
 } from '@/types/teacher';
 
 export const teacherApi = {
@@ -154,5 +155,15 @@ export const teacherApi = {
       data
     );
     return response.grade;
+  },
+
+  /**
+   * Get submission statistics for an assignment
+   */
+  getAssignmentStats: async (assignmentId: string): Promise<AssignmentStats> => {
+    const response = await apiClient.get<{ stats: AssignmentStats }>(
+      `/api/v0/teacher/assignments/${assignmentId}/stats`
+    );
+    return response.stats;
   },
 };

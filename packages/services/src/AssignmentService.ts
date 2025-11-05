@@ -589,4 +589,46 @@ export class AssignmentService {
   async getAssignmentCountByClass(classId: string): Promise<number> {
     return this.assignmentRepository.countByClass(classId)
   }
+
+  /**
+   * Get submission statistics for an assignment
+   * @param assignmentId - Assignment ID
+   * @param teacherId - Teacher ID (for authorization)
+   * @returns Submission stats {total, graded, ungraded}
+   * @throws NotFoundError if assignment not found
+   * @throws ForbiddenError if not the class teacher
+   */
+  async getSubmissionStats(
+    assignmentId: string,
+    teacherId: string
+  ): Promise<{
+    total: number
+    graded: number
+    ungraded: number
+  }> {
+    const assignment = await this.getAssignmentById(assignmentId)
+
+    // Verify teacher ownership
+    const classRecord = await this.classRepository.findById(assignment.class_id)
+    if (!classRecord) {
+      throw new NotFoundError('Class not found')
+    }
+
+    if (classRecord.teacher_id !== teacherId) {
+      throw new ForbiddenError('You can only view stats for your own assignments')
+    }
+
+    const total = await this.assignmentRepository.countSubmissionsByAssignment(
+      assignmentId
+    )
+    const graded = await this.assignmentRepository.countGradedSubmissions(
+      assignmentId
+    )
+
+    return {
+      total,
+      graded,
+      ungraded: total - graded,
+    }
+  }
 }

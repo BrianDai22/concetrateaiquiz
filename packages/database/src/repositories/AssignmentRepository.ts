@@ -336,6 +336,37 @@ export class AssignmentRepository {
   }
 
   /**
+   * Count submissions for an assignment
+   * @param assignmentId - Assignment ID
+   * @returns Number of submissions
+   */
+  async countSubmissionsByAssignment(assignmentId: string): Promise<number> {
+    const result = await this.db
+      .selectFrom('submissions')
+      .select((eb) => eb.fn.countAll<string>().as('count'))
+      .where('assignment_id', '=', assignmentId)
+      .executeTakeFirstOrThrow()
+
+    return parseInt(result.count, 10)
+  }
+
+  /**
+   * Count graded submissions for an assignment
+   * @param assignmentId - Assignment ID
+   * @returns Number of graded submissions
+   */
+  async countGradedSubmissions(assignmentId: string): Promise<number> {
+    const result = await this.db
+      .selectFrom('submissions')
+      .innerJoin('grades', 'submissions.id', 'grades.submission_id')
+      .select((eb) => eb.fn.countAll<string>().as('count'))
+      .where('submissions.assignment_id', '=', assignmentId)
+      .executeTakeFirstOrThrow()
+
+    return parseInt(result.count, 10)
+  }
+
+  /**
    * Update a submission
    * @param submissionId - Submission ID
    * @param updates - Fields to update
