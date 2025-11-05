@@ -85,6 +85,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
 # Start Next.js server with dumb-init
-# Next.js standalone output puts server.js at the root of the standalone directory
+# Next.js standalone output preserves workspace structure: apps/frontend/server.js
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "server.js"]
+CMD ["node", "apps/frontend/server.js"]
