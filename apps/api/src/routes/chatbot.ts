@@ -29,25 +29,37 @@ export async function chatbotRoutes(app: FastifyInstance) {
    * - timestamp: Date
    */
   app.post('/chat', { preHandler: requireAuth }, async (request, reply) => {
-    // Validate input
-    const validated = ChatMessageSchema.parse(request.body)
+    try {
+      // Validate input
+      const validated = ChatMessageSchema.parse(request.body)
 
-    // Get authenticated user ID from request (set by requireAuth middleware)
-    const userId = request.user?.id
-    if (!userId) {
-      return reply.code(401).send({ error: 'Unauthorized' })
+      // Get authenticated user ID from request (set by requireAuth middleware)
+      const userId = request.user?.userId
+      if (!userId) {
+        return reply.code(401).send({ error: 'Unauthorized' })
+      }
+
+      // Instantiate chatbot service with request database connection
+      const chatbotService = new ChatbotService(request.db)
+
+      // Get AI response
+      const response = await chatbotService.chat(userId, validated.message)
+
+      // Return response
+      return reply.code(200).send({
+        response,
+        timestamp: new Date(),
+      })
+    } catch (error) {
+      // Handle Zod validation errors
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({
+          error: 'Validation Error',
+          details: error.errors,
+        })
+      }
+      // Re-throw other errors to let Fastify's error handler deal with them
+      throw error
     }
-
-    // Instantiate chatbot service with request database connection
-    const chatbotService = new ChatbotService(request.db)
-
-    // Get AI response
-    const response = await chatbotService.chat(userId, validated.message)
-
-    // Return response
-    return reply.code(200).send({
-      response,
-      timestamp: new Date(),
-    })
   })
 }

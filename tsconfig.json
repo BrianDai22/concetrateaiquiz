@@ -48,7 +48,8 @@
     { "path": "./packages/shared" },
     { "path": "./packages/database" },
     { "path": "./packages/validation" },
-    { "path": "./packages/ui" }
+    { "path": "./packages/ui" },
+    { "path": "./packages/services" }
   ],
   "exclude": [
     "node_modules",

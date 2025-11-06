@@ -4,28 +4,26 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+
+// Mock the entire ChatbotService to avoid OpenAI API calls
+vi.mock('@concentrate/services', async () => {
+  const actual = await vi.importActual<typeof import('@concentrate/services')>('@concentrate/services')
+  return {
+    ...actual,
+    ChatbotService: class MockChatbotService {
+      constructor(_db: unknown) {
+        // Accept db parameter but don't use it
+      }
+      async chat(_userId: string, _message: string): Promise<string> {
+        return 'This is a test response from the AI assistant.'
+      }
+    },
+  }
+})
+
 import { buildApp } from '../../src/app.js'
 import { FastifyInstance } from 'fastify'
 import { db, clearAllTables } from '@concentrate/database'
-
-// Mock OpenAI module for integration tests
-vi.mock('openai', () => ({
-  default: class MockOpenAI {
-    chat = {
-      completions: {
-        create: vi.fn().mockResolvedValue({
-          choices: [
-            {
-              message: {
-                content: 'This is a test response from the AI assistant.',
-              },
-            },
-          ],
-        }),
-      },
-    }
-  },
-}))
 
 describe('Chatbot Routes', () => {
   let app: FastifyInstance
@@ -98,8 +96,9 @@ describe('Chatbot Routes', () => {
         password: 'Password123!',
       },
     })
-    const loginBody = JSON.parse(loginResponse.body)
-    accessToken = loginBody.accessToken
+    const cookies = loginResponse.cookies
+    const accessTokenCookie = cookies.find((c) => c.name === 'access_token')
+    accessToken = accessTokenCookie?.value || ''
   })
 
   afterEach(async () => {
@@ -129,8 +128,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: 'How do I submit an assignment?',
@@ -147,8 +146,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: 'What classes am I enrolled in?',
@@ -170,14 +169,15 @@ describe('Chatbot Routes', () => {
           password: 'Password123!',
         },
       })
-      const loginBody = JSON.parse(loginResponse.body)
-      const teacherToken = loginBody.accessToken
+      const cookies = loginResponse.cookies
+      const teacherTokenCookie = cookies.find((c) => c.name === 'access_token')
+      const teacherToken = teacherTokenCookie?.value || ''
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${teacherToken}`,
+        cookies: {
+          access_token: teacherToken,
         },
         payload: {
           message: 'How do I grade assignments?',
@@ -199,14 +199,15 @@ describe('Chatbot Routes', () => {
           password: 'Password123!',
         },
       })
-      const loginBody = JSON.parse(loginResponse.body)
-      const adminToken = loginBody.accessToken
+      const cookies = loginResponse.cookies
+      const adminTokenCookie = cookies.find((c) => c.name === 'access_token')
+      const adminToken = adminTokenCookie?.value || ''
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${adminToken}`,
+        cookies: {
+          access_token: adminToken,
         },
         payload: {
           message: 'How do I create a new user?',
@@ -222,8 +223,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: '',
@@ -239,8 +240,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: longMessage,
@@ -254,8 +255,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {},
       })
@@ -267,8 +268,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: '   How do I submit?   ',
@@ -317,8 +318,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: 'How do I use <script>alert("test")</script> in HTML?',
@@ -334,8 +335,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: '¿Cómo puedo enviar una tarea? 你好',
@@ -351,8 +352,8 @@ describe('Chatbot Routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v0/chatbot/chat',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
+        cookies: {
+          access_token: accessToken,
         },
         payload: {
           message: 'How do I:\n1. Submit assignment\n2. View grades\n3. Check feedback',
