@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Fastify backend API for Canvas School Portal",
   "private": true,
-  "main": "dist/index.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/server.js",
     "test": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },

@@ -1,6 +1,14 @@
 import { toCamelCase } from './caseConverter';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Get API URL with runtime fallback
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use environment variable or fallback
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  }
+  // Server-side: always use localhost
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+};
 
 interface ApiError {
   message: string;
@@ -8,16 +16,15 @@ interface ApiError {
 }
 
 class ApiClient {
-  private baseURL: string;
-
-  constructor(baseURL: string) {
-    this.baseURL = baseURL;
+  private get baseURL(): string {
+    return getApiUrl();
   }
 
   private async fetchWithRefresh<T>(
     url: string,
     options: RequestInit = {}
   ): Promise<T> {
+    console.log('[ApiClient] Fetching:', `${this.baseURL}${url}`);
     const response = await fetch(`${this.baseURL}${url}`, {
       ...options,
       credentials: 'include', // CRITICAL: Include cookies for JWT auth
@@ -91,4 +98,4 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient(API_URL);
+export const apiClient = new ApiClient();
