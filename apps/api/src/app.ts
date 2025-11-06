@@ -35,11 +35,19 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Register CORS with dynamic origin
   await app.register(cors, {
     origin: (origin, callback) => {
+      // Build allowed origins from environment
       const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
         'http://localhost',
+        'https://coolstudentportal.online',
+        'http://coolstudentportal.online',
       ]
+
+      // Add CORS_ORIGIN from environment if set
+      if (process.env['CORS_ORIGIN']) {
+        allowedOrigins.push(process.env['CORS_ORIGIN'])
+      }
 
       // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) {
