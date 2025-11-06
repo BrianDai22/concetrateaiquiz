@@ -9,6 +9,7 @@ import { adminRoutes } from './admin.js'
 import { teacherRoutes } from './teacher.js'
 import { studentRoutes } from './student.js'
 import { statsRoutes } from './stats.js'
+import { chatbotRoutes } from './chatbot.js'
 
 export async function registerRoutes(app: FastifyInstance) {
   app.get('/', async () => {
@@ -29,4 +30,7 @@ export async function registerRoutes(app: FastifyInstance) {
 
   // Stats routes (public)
   await app.register(statsRoutes, { prefix: '/stats' })
+
+  // Chatbot routes (auth required)
+  await app.register(chatbotRoutes, { prefix: '/chatbot' })
 }
